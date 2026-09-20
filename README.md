@@ -14,7 +14,7 @@
 
 通知只包含项目文件夹名和上述状态，不包含对话内容。当前 iTerm2 会话在前台时不发送事件通知；手动 `--test` 始终发送。首版支持 **macOS + iTerm2 + Codex CLI + Bark**。
 
-授权提醒只在通过下方的启动器运行 Codex 时启用。启动器监听 Codex 发给终端界面的实际审批请求；自动审核中的 `PermissionRequest` hook 不会触发 Bark。直接运行 `codex` 时，回复完成和输入提醒仍可工作，但不会发送 Bark 授权提醒。
+授权提醒只在通过下方的启动器运行 Codex 时启用。启动器监听 Codex 发给终端界面的实际审批请求；自动审核中的 `PermissionRequest` hook 不会触发 Bark。直接运行 `codex` 时，回复完成和输入提醒仍可工作，但不会发送 Bark 授权提醒。如果你使用本项目已有的 `codex-proxy` 函数，运行 `codex-proxy with_notifier` 即可同时保留本地代理并启用通知启动器；不带参数的 `codex-proxy` 保持原来的代理行为。
 
 ### 准备
 
@@ -54,6 +54,12 @@
    /usr/bin/python3 "${CODEX_HOME:-$HOME/.codex}/hooks/codex_note_reminder_cli.py"
    ```
 
+   如果你使用本项目已有的 `codex-proxy` 函数，也可以运行：
+
+   ```sh
+   codex-proxy with_notifier
+   ```
+
 6. **验证实际使用。** 在 iTerm2 中通过启动器打开 Codex，发出一个请求后切到其他窗口或应用。回复完成时应收到通知；切回该 iTerm2 会话后，事件通知应被抑制。再分别检查实际出现的人工授权和输入／选择提示。自动审核通过的请求不应发出“需要授权”。
 
 ### 可选：使用代理
@@ -89,7 +95,7 @@ When Codex CLI runs in iTerm2 on your Mac, **Bark can notify your phone when a t
 
 The actual notification contains only the project folder name and a short status; it never includes conversation text. Event alerts are suppressed while the originating iTerm2 session is in front. A manual `--test` always sends. This release supports **macOS + iTerm2 + Codex CLI + Bark**.
 
-Approval alerts require launching Codex through the launcher below. It observes the approval request Codex actually sends to its terminal UI; auto-reviewed `PermissionRequest` hooks do not trigger Bark. Running `codex` directly still supports turn and input alerts, but not Bark approval alerts.
+Approval alerts require launching Codex through the launcher below. It observes the approval request Codex actually sends to its terminal UI; auto-reviewed `PermissionRequest` hooks do not trigger Bark. Running `codex` directly still supports turn and input alerts, but not Bark approval alerts. If you already use the `codex-proxy` function, run `codex-proxy with_notifier` to keep the local proxy and enable the notifier; plain `codex-proxy` keeps its original proxy-only behavior.
 
 ### Before you start
 
@@ -127,6 +133,12 @@ Run these commands from this project directory:
 
    ```sh
    /usr/bin/python3 "${CODEX_HOME:-$HOME/.codex}/hooks/codex_note_reminder_cli.py"
+   ```
+
+   If you use the existing `codex-proxy` function, you can also run:
+
+   ```sh
+   codex-proxy with_notifier
    ```
 
 6. **Check the real workflow.** Start Codex through the launcher in iTerm2, send a request, then switch to another window or app. You should get an alert when the turn finishes. Return to that iTerm2 session to confirm event alerts are suppressed. Check a real human approval prompt and an input or choice prompt when they occur. Auto-approved requests should not send permission alerts.
