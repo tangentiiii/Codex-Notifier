@@ -14,10 +14,12 @@ from urllib.parse import urlsplit
 
 HOME = Path(os.environ.get('CODEX_HOME', str(Path.home() / '.codex'))).expanduser()
 SCRIPT = HOME / 'hooks' / 'codex_note_reminder.py'
+LAUNCHER = HOME / 'hooks' / 'codex_note_reminder_cli.py'
 CONFIG = HOME / 'config.toml'
 HOOKS = HOME / 'hooks.json'
 STATE = HOME / 'codex-note-reminder-install.json'
 SOURCE = Path(__file__).resolve().with_name('bark_notify.py')
+LAUNCHER_SOURCE = Path(__file__).resolve().with_name('codex_note_reminder_cli.py')
 START = '# BEGIN codex-note-reminder\n'
 END = '# END codex-note-reminder\n'
 MATCHER = r'(?:^|__|\.)(?:request_user_input(?:_async)?|send_user_message_async)$'
@@ -91,7 +93,6 @@ def command(proxy):
 def hook_entries(cmd):
     leaf = {'type': 'command', 'command': cmd, 'timeout': 8}
     return {
-        'PermissionRequest': {'hooks': [leaf]},
         'PreToolUse': {'matcher': MATCHER, 'hooks': [leaf]},
     }
 
@@ -138,7 +139,7 @@ def update_hooks(data, cmd, uninstall=False):
                 isinstance(h, dict) and owned_command(h.get('command')))]
             if rest['hooks']:
                 revised.append(rest)
-        if not uninstall:
+        if not uninstall and event == 'PreToolUse':
             revised.append(hook_entries(cmd)[event])
         if revised:
             hooks[event] = revised
@@ -164,7 +165,7 @@ def main():
     if sys.platform != 'darwin':
         raise ValueError('This release supports macOS only')
     proxy = validate_proxy(args.proxy)
-    for p in (HOME, HOME / 'hooks', CONFIG, HOOKS, SCRIPT, STATE):
+    for p in (HOME, HOME / 'hooks', CONFIG, HOOKS, SCRIPT, LAUNCHER, STATE):
         safe(p)
     state = json.loads(read(STATE)) if STATE.exists() else None
     if state is not None and state.get('script') != str(SCRIPT):
@@ -174,6 +175,10 @@ def main():
         return
     if not args.uninstall and SCRIPT.exists() and state is None:
         raise ValueError('Target script already exists without installation state')
+    if not args.uninstall and LAUNCHER.exists() and (
+        state is None or hashlib.sha256(LAUNCHER.read_bytes()).hexdigest() != state.get('launcher_sha256')
+    ):
+        raise ValueError('Target launcher exists and is not owned by this installation')
     config, owned = managed_block(read(CONFIG))
     if not args.uninstall and other_notify(config):
         raise ValueError('Another notify command is configured; config.toml was not changed')
@@ -190,7 +195,7 @@ def main():
         if proxy:
             new_config += ', "--proxy", ' + json.dumps(proxy)
         new_config += ']\n' + END + config
-    prior = backup([CONFIG, HOOKS, SCRIPT, STATE])
+    prior = backup([CONFIG, HOOKS, SCRIPT, LAUNCHER, STATE])
     HOME.mkdir(mode=0o700, parents=True, exist_ok=True)
     if new_config or CONFIG.exists():
         write(CONFIG, new_config)
@@ -199,6 +204,8 @@ def main():
     if args.uninstall:
         if SCRIPT.exists() and hashlib.sha256(SCRIPT.read_bytes()).hexdigest() == state.get('sha256'):
             SCRIPT.unlink()
+        if LAUNCHER.exists() and hashlib.sha256(LAUNCHER.read_bytes()).hexdigest() == state.get('launcher_sha256'):
+            LAUNCHER.unlink()
         STATE.unlink()
         print('Uninstalled. Bark key retained. Backup: ' + str(prior))
     else:
@@ -206,8 +213,12 @@ def main():
         shutil.copyfile(SOURCE, SCRIPT)
         os.chmod(SCRIPT, 0o700)
         digest = hashlib.sha256(SCRIPT.read_bytes()).hexdigest()
-        write(STATE, json.dumps({'script': str(SCRIPT), 'sha256': digest}, indent=2) + '\n')
-        print('Installed. Run /hooks in Codex to trust the hooks. Backup: ' + str(prior))
+        shutil.copyfile(LAUNCHER_SOURCE, LAUNCHER)
+        os.chmod(LAUNCHER, 0o700)
+        launcher_digest = hashlib.sha256(LAUNCHER.read_bytes()).hexdigest()
+        write(STATE, json.dumps({'script': str(SCRIPT), 'sha256': digest,
+                                 'launcher_sha256': launcher_digest, 'proxy': proxy}, indent=2) + '\n')
+        print('Installed. Run /hooks in Codex to trust the hook. Launch via ' + str(LAUNCHER) + '. Backup: ' + str(prior))
 
 
 if __name__ == '__main__':

@@ -166,8 +166,6 @@ def main():
         event = status = None
         if payload.get('type') == 'agent-turn-complete':
             event, status = 'turn', '本轮回复已完成'
-        elif payload.get('hook_event_name') == 'PermissionRequest':
-            event, status = 'approval', '需要授权'
         elif (payload.get('hook_event_name') == 'PreToolUse'
               and INPUT_TOOL.search(str(payload.get('tool_name', '')))):
             event, status = 'input', '需要输入或选择'
