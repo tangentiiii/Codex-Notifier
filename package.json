@@ -12,13 +12,13 @@
   ],
   "pi": {
     "extensions": [
-      "./extensions/pi-bark-reminder.ts"
+      "./pi/extensions/pi-bark-reminder.ts"
     ]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
   },
   "scripts": {
-    "test": "/usr/bin/python3 -m unittest -v test_reminder.py"
+    "test": "/usr/bin/python3 -m unittest discover -s tests -v"
   }
 }

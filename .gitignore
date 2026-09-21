@@ -8,4 +8,5 @@ venv/
 *device_key*
 config.toml
 hooks.json
+codex-note-reminder-install.json
 bark-reminder.json

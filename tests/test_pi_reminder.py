@@ -8,7 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
+PI_ROOT = ROOT / 'pi'
 
 
 class ReminderTests(unittest.TestCase):
@@ -20,7 +21,7 @@ class ReminderTests(unittest.TestCase):
 
     def module(self):
         with patch.dict(os.environ, PI_CODING_AGENT_DIR=str(self.home)):
-            spec = importlib.util.spec_from_file_location('reminder_test', ROOT / 'bark_notify.py')
+            spec = importlib.util.spec_from_file_location('reminder_test', PI_ROOT / 'bark_notify.py')
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
         return module
@@ -82,7 +83,7 @@ class ReminderTests(unittest.TestCase):
 
     def test_typescript_extension_registers_native_pi_events(self):
         script = r'''
-import { registerReminder } from "./extensions/pi-bark-reminder.ts";
+import { registerReminder } from "./pi/extensions/pi-bark-reminder.ts";
 const handlers = new Map();
 const pi = { on(name, handler) { handlers.set(name, handler); } };
 const calls = [];
