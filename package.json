@@ -1,0 +1,24 @@
+{
+  "name": "pi-bark-reminder",
+  "version": "1.0.0",
+  "description": "Bark notifications when Pi finishes or waits for input in a background iTerm2 session",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "bark",
+    "iterm2",
+    "notification"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/pi-bark-reminder.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "scripts": {
+    "test": "/usr/bin/python3 -m unittest -v test_reminder.py"
+  }
+}
